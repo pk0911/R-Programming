@@ -1,0 +1,251 @@
+
+
+```{r}
+#ETL loading the dataset
+bike = read.csv(file.choose(),header=TRUE,sep=",")
+str(bike) #provides metadata/description of file
+
+```
+```{r}
+#library for data processing and manipulation
+library(dplyr)
+
+```
+
+```{r}
+extracted_rows<-filter(bike,registered==0,season==1 | season==2) #extracted data where users are not registered ie. 0 and season is 0 or 1(summer or winter )
+extracted_rows
+```
+
+```{r}
+dim(extracted_rows) #to know the dimension of the dataset
+head(bike,10) #gives first 10 rows of dataset
+
+```
+
+```{r}
+glimpse(bike) #gives the vertical preview of the dataset and also gives the datatype of columns
+View(bike)
+summary(bike) #gives summary of dataset
+```
+
+```{r}
+library(skimr)
+```
+
+```{r}
+skim(bike)#gives detailed summary of dataset in form of table more informative than summary func as it also tells missing values and complete rows 
+```
+
+```{r}
+library(devtools)
+```
+
+```{r}
+devtools::install_github("ropensci/visdat") #importing tool visdat from developer's site which is uploaded on github repo
+library(visdat)
+vis_miss(bike)
+vis_dat(bike)
+```
+
+```{r}
+if (!require(devtools)) install.packages("devtools")
+devtools::install_github("boxuancui/DataExplorer")
+
+library(DataExplorer)
+```
+
+```{r}
+DataExplorer::create_report(bike)  #create report of dataset
+#bar chart is used for discrete data while histogram is used for continuous data
+```
+
+```{r}
+data(iris)
+head(iris)
+summary(iris)
+plot(iris,col=iris$species)
+i<-duplicated(iris) #for checking duplicates entries true if there are duplicates else no
+which(i) #to find position of duplicate value
+iris[i,]
+unique(iris)
+?unique
+?complete.cases #returns complete cases from iris
+```
+
+```{r}
+clean.data<-unique(iris[complete.cases(iris),]) #removes duplicates and missing data permanently
+(clean.data)
+```
+
+```{r}
+aggregate(.~Species,data=iris,FUN=mean)
+aggregate(.~Species,data=iris,FUN=median)
+```
+```{r}
+id<-sample(1:nrow(iris),20)
+id
+s<-iris[id,]
+plot(s,col=s$Species) #gives correlation bw two variables
+```
+
+```{r}
+install.packages("sampling")
+library(sampling)
+id2<-strata(iris,stratanames="Species",size=c(5,5,5),method="srswor")
+id2
+s2<-iris[id2$ID_unit,]
+plot(s2,col=s2$Species) #plots correlation 
+```
+
+```{r}
+install.packages('scatterplot3d')
+library(scatterplot3d)
+scatterplot3d(iris[,1:3],color=as.integer(iris$Species))  #3d correlation plot
+```
+
+```{r}
+install.packages("rgl")
+library(rgl)
+plot3d(as.matrix(iris[,1:3]),col=as.integer(iris$Species),size=5) #3d matrix plot
+
+```
+
+```{r}
+iris.scaled<-scale(iris[1:4])
+head(iris.scaled)
+summary(iris.scaled)
+```
+
+
+```{r}
+#Proximity means similarity or dissimilarity
+#for similarity use manhattan or euclidean distance
+iris.scaled[1:5,]
+dist(iris.scaled[1:5,],method="euclidean")
+dist(iris.scaled[1:5,],method="manhattan")
+```
+
+```{r}
+#Chebyshev distance is maximum of euclidean and manhattan
+dist(iris.scaled[1:5,],method="maximum")
+```
+
+```{r}
+#For binary data we use hamming distance and jackard distance
+b<-rbind(c(0,0,0,1,1,1,1,0,0,1),c(0,0,1,1,1,0,0,1,0,0))
+b #jackard index
+dist(b,method="binary") #jackard distance
+
+dist(b,method="manhattan") #hamming distance
+
+```
+
+```{r}
+#Association Mining
+#Create a list of basket
+market_basket<-list(c("apple","beer","rice","meat"),
+                    c("apple","beer","rice"),
+                    c("apple","beer"),
+                    c("apple","pear"),
+                    c("milk","beer","rice","meat"),
+                    c("milk","beer","rice"),
+                    c("milk","beer"),
+                    c("milk","pear"))
+market_basket
+
+```
+
+```{r}
+names(market_basket)<-paste("T",c(1:8),sep=" ") #naming of list items
+market_basket
+```
+
+```{r}
+#Apriori Algorithm
+install.packages("arules")
+library(arules)
+
+#Apriori Algorithm visualization package
+install.packages("arulesViz")
+library(arulesViz)
+```
+
+```{r}
+trans<-as(market_basket,"transactions")
+dim(trans) #ans is 8,6 means 8 transactions having 6 items
+
+dim(market_basket) #if directly pass the list then it will not be able to tell no of transactions
+
+itemLabels(trans) 
+summary(trans)
+image(trans)
+
+itemFrequencyPlot(trans,topN=10,cexnames=1) #gives relative frequency or support
+
+rules<-apriori(trans,parameter=list(supp=0.3,conf=0.5,maxlen=10,target="rules")) #maxlen tells maximum no of items that can be present in rule target is the last column
+
+summary(rules) #calculates the lift as well
+
+inspect(rules) #analyze the rules
+```
+
+```{r}
+rules<-apriori(trans,parameter=list(supp=0.3,conf=0.5,maxlen=2,minlen=2,target="rules")) #this will only show items with length 2 the ones with length 1 will be eliminated
+inspect(rules)
+
+#Anaalyze which product is bought before purchasing beer
+beer_rules_rhs<-apriori(trans,parameter=list(supp=0.3,conf=0.5,maxlen=10,minlen=2),appearance=list(default="lhs",rhs="beer"))
+inspect(beer_rules_rhs)
+
+```
+
+```{r}
+#Anaalyze which product is bought after purchasing beer
+beer_rules_lhs<-apriori(trans,parameter=list(supp=0.3,conf=0.5,maxlen=10,minlen=2),appearance=list(default="rhs",lhs="beer"))
+inspect(beer_rules_lhs)
+```
+
+```{r}
+library(arulesViz)
+subrules<-head(rules,n=10,by="confidence")
+plot(subrules,method="graph",engine="htmlwidget")
+```
+
+```{r}
+plot(subrules,method="paracoord")
+```
+
+```{r}
+#Dataset Groceries
+groc<-data(Groceries)
+trans<-as(Groceries,"transactions")
+dim(trans)
+
+dim(trans) 
+
+itemLabels(trans) 
+summary(trans)
+image(trans)
+
+itemFrequencyPlot(trans,topN=169,cexnames=1) 
+
+rules<-apriori(trans,parameter=list(supp=0.3,conf=0.5,maxlen=10,target="rules")) 
+
+summary(rules) 
+
+inspect(rules)
+```
+
+```{r}
+inspect(head(Groceries,2))
+grocery_rules<-apriori(Groceries,parameter=list(support=0.01,confidence=0.5))
+inspect(grocery_rules)
+
+library(arulesViz)
+subrules1<-head(grocery_rules,n=10,by="confidence")
+plot(subrules1,method="graph",engine="htmlwidget")
+
+plot(subrules1,method="paracoord")
+
+```
