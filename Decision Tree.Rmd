@@ -1,0 +1,73 @@
+
+```{r}
+#ml bench
+
+library(mlbench)
+```
+
+```{r}
+data(Zoo)
+head(Zoo)
+summary(Zoo)
+for(i in c(1:12,14:16)) Zoo[[i]]<-as.factor(Zoo[[i]]) #converting all columns' datatype from logical to categorical/factor except legs column
+summary(Zoo[[i]]) #write i in [[]] as it is a list
+?Zoo #gives description of data
+```
+
+```{r}
+library(rpart)
+library(rpart.plot)
+```
+
+
+```{r}
+#classification and regression tree
+tree_default<-rpart(type~.,data=Zoo) 
+tree_default
+rpart.plot(tree_default,extra=2,under=TRUE,varlen=0,faclen=0) #extra=2 prints for each leaf node from the data the no of correctly classified objects for data and the total no of projects from data and the total no of objects from the training data falling into that node
+```
+
+```{r}
+tree_full<-rpart(type~.,data=Zoo,control=rpart.control(minsplit=2,cp=0))
+rpart.plot(tree_full,extra=2,under=TRUE,varlen=0,faclen=0)
+tree_full
+```
+
+```{r}
+#metrics to access the quality of classifier
+#confusion matrix
+#TP those instances where predicted class=actual class
+#TN those instances where predicted and actual class are both negative
+#FP those instances where predicted class is positive but actually the instances are negative
+#FN those instances where predicted class is negative but actually the instances are positive
+
+#Precision=TP/TP+FP it identifies the frequency with which a model was correct when predicting the positive class 
+#Recall=TP/TP+FN it identifies out of all the possible labels how many did the model correctly identify
+```
+
+```{r}
+adverts<-read.csv(file.choose(),header=TRUE,sep=",")
+adverts
+```
+
+```{r}
+pairs(adverts) #shows correlation
+plot(adverts$marketing_total,adverts$revenues,ylab="Revenues",xlab="Marketing Total",main="Revenues and Marketing") #regression/dependency between revenue and marketing total
+```
+
+```{r}
+#Linear regression
+#Syntax=model<-lm(Y~X,data=dataset)
+model<-lm(revenues~marketing_total,data=adverts) 
+model
+#CONCLUSION
+#revenue increase 51.93% for every 1000 rs of marketing total
+#revenue will be 32.00670 when marketing tota; is .
+#Revenue=32.0067+(0.05193*Marketing Total)
+
+
+#Residual=Predicted value-Actual value
+```
+
+
+
