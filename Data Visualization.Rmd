@@ -1,0 +1,195 @@
+```{r}
+library(ISLR)
+```
+
+
+```{r}
+names(Smarket)
+head(Smarket)
+summary(Smarket)
+```
+
+```{r}
+#Visualization of frequency of each column in dataset Smarket
+par(mfrow=c(1,8))
+for(i in 1:8){
+  hist(Smarket[,i],main=names(Smarket)[i])
+}
+
+```
+
+```{r}
+#Plot of missing values whole red means no missing values
+library(mlbench)
+library(Amelia)
+missmap(Smarket,col=c("blue","red"),legend=FALSE)
+```
+
+```{r}
+#Correlation plot between columns
+library(corrplot)
+corr<-cor(Smarket[,1:8])
+corrplot(corr,method="circle")
+```
+
+```{r}
+library(caret)
+library(ggplot2)
+x<-Smarket[,1:8]
+y<-Smarket[,9]
+scales<-list(x=list(relation="free"),y=list(relation="free"))
+featurePlot(x=x,y=y,plot="density",scales=scales)
+```
+
+```{r}
+#Logistic regression
+library(ISLR)
+glm.fit<-glm(Direction~Lag1+Lag2+Lag3+Lag4+Lag5+Volume,data=Smarket,family=binomial)
+summary(glm.fit)
+glm.probs<-predict(glm.fit,type="response")
+glm.probs[1:5]
+#Prediction of whether stock market goes up or down
+glm.predict<-ifelse(glm.probs>0.5,"Up","Down")
+
+#Confusion matrix
+attach(Smarket)
+table(glm.predict,Direction)
+
+
+```
+
+```{r}
+train=Year<2005
+glm.fit<-glm(Direction~Lag1+Lag2+Lag3+Lag4+Lag5+Volume,data=Smarket,family=binomial,subset=train) #training data
+glm.probs<-predict(glm.fit,newdata=Smarket[!train,],type="response") #testing data
+glm.pred<-ifelse(glm.probs>0.5,"Up","Down")
+head(glm.pred)
+```
+
+```{r}
+#Time series analysis for forecasting
+#Four components:
+#1.Trend(Tt)  2.Seasonal(St)  3.Cyclical(Ct)  4.Irregular(It)
+#Trend means data either  upward or downward over a period of time
+#Seasonal component analyzes seasonal data like sales data during festivals
+#Cyclical fluctuations have repetitive pattern with a time between repetition of more than a year whereas in case of seasonality the fluctuations are observed within a calendar year and are driven by factors such as festivals and customs that exist in society
+#Irregular component is white noise or random uncorrelated changes that follow a normal distribution with mean value of 0 and constant variance
+#NOTE Time series data is additive or multiplicative of these components ie. Y=Tt+St+Ct+It or Y=Tt*St*Ct*It
+#The additive model is appropriate if the seasonal component remains constant about the level or mean and do not vary with the level of the time series. While the multiplicative model is appropriate if the seasonal variation is correlated with level.
+
+#Measures for determining accuracy of forecast
+#1.MAE(Mean Absolute Error)  2.MAPE(Mean absolute % error) which is dimensionless  3.MSE(Mean square error) depends on range of time series data  4.RMSE(Root Mean Squared Error)
+
+#Forecasting techniques
+#1.Simple
+#   i)Moving average ii)Exponential smoothing
+#2.Regression based
+#   i)AR(Auto regressive) ii)MA(Moving Average) iii)ARMA iv)ARIMA(Auto Regressive Integrated Moving Average) v)ARIMAX
+
+
+#Moving Average vs Weighted Average
+#Moving average is calculated after every transaction, and the calculation only takes current inventory status into consideration. Weighted average is calculated for all transactions in a given time period.
+```
+
+
+```{r}
+sales<-c(18,33,41,7,34,35,24,25,24,21,25,20,22,31,40,29,25,21,22,54,31,25,26,35)
+tsales<-ts(sales,start=c(2003,1),frequency=12)
+tsales
+plot(tsales)
+start(tsales)
+end(tsales)
+frequency(tsales)
+tsales.subset<-window(tsales,start=c(2003,5),end=c(2004,6))
+tsales.subset
+```
+
+```{r}
+#Moving average
+opar<-par(no.readonly=TRUE)
+par(mfrow=c(2,2))
+ylim<-c(min(Nile),max(Nile))
+plot(Nile,main="Raw Time Series")
+plot(ma(Nile,3),main="Simple Moving Averages(k=3)",ylim=ylim)
+plot(ma(Nile,7),main="Simple Moving Averages(k=7)",ylim=ylim)
+plot(ma(Nile,7),main="Simple Moving Averages(k=15)",ylim=ylim)
+par(opar)
+```
+
+```{r}
+plot(AirPassengers)
+lAirPassengers<-log(AirPassengers)
+plot(lAirPassengers)
+plot(lAirPassengers,ylab="log(AirPassengers)")
+fit<-stl(lAirPassengers,s.window="period") #log of each function
+plot(fit)
+fit$time.series #component for each time series
+exp(fit$time.series) #converting all components into exponential
+
+par(mfrow=c(2,1))
+library(forecast)
+monthplot(AirPassengers,xlab=" ",ylab=" ")
+seasonplot(AirPassengers,year.labels="TRUE",main=" ")
+```
+
+```{r}
+#1.Single exponential smoothing
+#  Drawback:if there is trend then this does not work
+#2.Double exponential smoothing(Holt method)
+#  Advantage:if there is trends component then it will consider it hence good
+```
+
+```{r}
+library(forecast)
+fit<-ets(nhtemp,model="ANN")
+forecast(fit,1)
+plot(forecast(fit,1),xlab="Year",ylab=expression(paste("Temperature(",degree*F,")",)),main="New Haven Annual Mean Temperature")
+accuracy(fit)
+```
+
+```{r}
+#Autocorrelation function
+library(forecast)
+library(tseries)
+plot(Nile)
+ndiffs(Nile)
+dNile<-diff(Nile)
+plot(dNile)
+adf.test(dNile)
+```
+
+```{r}
+Acf(dNile)# Auto correlation function
+Pacf(dNile)# Partial Auto correlation function
+
+```
+
+```{r}
+fit<-arima(Nile,order=c(0,1,1))
+fit
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
